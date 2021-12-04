@@ -4,7 +4,7 @@ export namespace Range {
     export type Full<T> = Start<T> & End<T>;
     export namespace Full {
         export function is<T = any>(value: any): value is Full<T> {
-            return value && 'start' in value && 'end' in value;
+            return typeof value === 'object' && value !== null && 'start' in value && 'end' in value;
         }
     }
 
@@ -14,7 +14,7 @@ export namespace Range {
 
     export namespace Start {
         export function is<T = any>(value: any): value is Start<T> {
-            return value && 'start' in value;
+            return typeof value === 'object' && value !== null && 'start' in value;
         }
     }
 
@@ -24,7 +24,7 @@ export namespace Range {
 
     export namespace End {
         export function is<T = any>(value: any): value is End<T> {
-            return value && 'end' in value;
+            return typeof value === 'object' && value !== null && 'end' in value;
         }
     }
 
@@ -35,4 +35,6 @@ export namespace Range {
     export function is<T>(value: any): value is Range<T> {
         return Full.is(value) || Start.is(value) || End.is(value);
     }
+
+    export type Type<T extends Range<unknown>> = T extends Range<infer U> ? U : never;
 }
