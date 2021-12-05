@@ -7,6 +7,7 @@ describe('Range', () => {
 
     const nonRangeCases: Array<[any]> = [
         [undefined],
+        // eslint-disable-next-line no-null/no-null
         [null],
         [{}],
         [[1, 2]],

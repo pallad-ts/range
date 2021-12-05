@@ -1,3 +1,4 @@
+/* eslint-disable no-null/no-null */
 import {Mapping, MappingEntry} from './Mapping';
 
 export type Range<T> = Range.Start<T> | Range.End<T> | Range.Full<T>;
