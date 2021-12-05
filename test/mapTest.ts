@@ -1,5 +1,5 @@
 import {Range} from "@src/Range";
-import {map} from "@src/map";
+import {Mapping} from '@src/Mapping';
 
 describe('map', () => {
     const full: Range.Full<number> = {start: 1, end: 100};
@@ -7,7 +7,7 @@ describe('map', () => {
     const end: Range.End<number> = {end: 100};
 
     type ResultType = 'full' | 'start' | 'end';
-    describe.each<[string, map.Mapper<number, ResultType>]>([
+    describe.each<[string, Mapping<number, ResultType>]>([
         [
             'functions',
             {
@@ -30,7 +30,7 @@ describe('map', () => {
             [start, 'start'],
             [end, 'end']
         ])('range: %% %s', (range, expected) => {
-            expect(map(range, mapper))
+            expect(Range.map(range, mapper))
                 .toEqual(expected);
         });
     });

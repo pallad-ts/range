@@ -1,25 +1,25 @@
-import {create} from "@src/create";
+import {Range} from "@src/Range";
 
 describe('create', () => {
     describe('success', () => {
         it('full', () => {
-            expect(create(1, 10))
+            expect(Range.create(1, 10))
                 .toStrictEqual({start: 1, end: 10});
         });
 
         it('start', () => {
-            expect(create(1))
+            expect(Range.create(1))
                 .toStrictEqual({start: 1});
-            expect(create(1, null))
+            expect(Range.create(1, null))
                 .toStrictEqual({start: 1});
-            expect(create(1, undefined))
+            expect(Range.create(1, undefined))
                 .toStrictEqual({start: 1});
         });
 
         it('end', () => {
-            expect(create(undefined, 10))
+            expect(Range.create(undefined, 10))
                 .toStrictEqual({end: 10})
-            expect(create(null, 10))
+            expect(Range.create(null, 10))
                 .toStrictEqual({end: 10})
         });
     });
@@ -35,7 +35,7 @@ describe('create', () => {
     ])('failing if none values provided', (...args) => {
         expect(() => {
             // @ts-ignore
-            create(...args);
+            Range.create(...args);
         }).toThrowError('Cannot create Range from undefined or null values');
     });
 });
