@@ -1,33 +1,46 @@
 /* eslint-disable no-null/no-null */
 import {Mapping, MappingEntry} from './Mapping';
-import {Validation} from 'monet';
+import {Either, Validation} from 'monet';
+import {compare} from '@pallad/compare';
 
-export type Range<T> = Range.Start<T> | Range.End<T> | Range.Full<T>;
+export type Range<T extends NonNullable<{}>> = Range.Full<T> | Range.Start<T> | Range.End<T>;
+
+const toTupleMapper: Mapping<unknown, Range.Tuple<unknown>> = {
+    start({start}) {
+        return [start];
+    },
+    end({end}) {
+        return [undefined, end];
+    },
+    full({start, end}) {
+        return [start, end];
+    }
+};
 
 export namespace Range {
-    export type Full<T> = Start<T> & End<T>;
+    export type Full<T extends NonNullable<{}>> = Start<T> & End<T>;
     export namespace Full {
-        export function is<T = any>(value: any): value is Full<T> {
+        export function is<T extends NonNullable<{}> = any>(value: any): value is Full<T> {
             return typeof value === 'object' && value !== null && 'start' in value && 'end' in value;
         }
     }
 
-    export interface Start<T> {
+    export interface Start<T extends NonNullable<{}>> {
         start: T;
     }
 
     export namespace Start {
-        export function is<T = any>(value: any): value is Start<T> {
+        export function is<T extends NonNullable<{}> = any>(value: any): value is Start<T> {
             return typeof value === 'object' && value !== null && 'start' in value;
         }
     }
 
-    export interface End<T> {
+    export interface End<T extends NonNullable<{}>> {
         end: T;
     }
 
     export namespace End {
-        export function is<T = any>(value: any): value is End<T> {
+        export function is<T extends NonNullable<{}> = any>(value: any): value is End<T> {
             return typeof value === 'object' && value !== null && 'end' in value;
         }
     }
@@ -36,43 +49,87 @@ export namespace Range {
     export const isEnd = End.is;
     export const isFull = Full.is;
 
-    export function is<T>(value: any): value is Range<T> {
+    export function is<T extends NonNullable<{}> = any>(value: any): value is Range<T> {
         return Full.is(value) || Start.is(value) || End.is(value);
     }
 
-    export type Type<T extends Range<unknown>> = T extends Range<infer U> ? U : never;
+    export type Type<T extends Range<any>> = T extends Range<infer U> ? U : never;
 
-    export function create<T>(start: T, end: T): Validation<string, Range.Full<T>>;
-    export function create<T>(start: T, end: undefined | null): Validation<string, Range.Start<T>>;
-    export function create<T>(start: T): Validation<string, Range.Start<T>>;
-    export function create<T>(start: undefined | null, end: T): Validation<string, Range.End<T>>;
-    export function create<T>(start?: T, end?: T): Validation<string, Range<T>> {
+    export type Tuple<T> = Tuple.Start<T> | Tuple.End<T> | Tuple.Full<T>;
+
+    export namespace Tuple {
+        export type Start<T> = [T] | [T, undefined | null];
+        export type End<T> = [undefined | null, T];
+        export type Full<T> = [T, T];
+    }
+
+    export function create<T extends NonNullable<{}>>(start: T, end: undefined | null): Range.Start<T>;
+    export function create<T extends NonNullable<{}>>(start: T): Range.Start<T>;
+    export function create<T extends NonNullable<{}>>(start: undefined | null, end: T): Range.End<T>;
+    export function create<T extends NonNullable<{}>>(start: T, end: T): Range.Full<T>;
+    export function create<T extends NonNullable<{}>>(start: T | undefined | null, end?: T): Range<T> {
         if (start !== undefined && start !== null && end !== undefined && end !== null) {
-            return Validation.Success({start, end});
+            if (compare(start, end).isGreater) {
+                throw new TypeError('"start" cannot be greater than "end"');
+            }
+            return {start, end};
         } else if (start !== undefined && start !== null) {
-            return Validation.Success({start});
+            return {start};
         } else if (end !== undefined && end !== null) {
-            return Validation.Success({end});
+            return {end};
         }
 
-        return Validation.Fail('Cannot create Range from undefined or null values');
+        throw new TypeError('Cannot create Range from undefined or null values');
     }
 
-    export function fromTuple<T>(arr: [T] | [T, T]): Validation<string, Range<T>> {
-        if (arr.length === 1) {
-            return create(arr[0]);
+    export namespace create {
+        export function validation<T extends NonNullable<{}>>(start: T, end: undefined | null): Validation<string, Range.Start<T>>;
+        export function validation<T extends NonNullable<{}>>(start: T): Validation<string, Range.Start<T>>;
+        export function validation<T extends NonNullable<{}>>(start: undefined | null, end: T): Validation<string, Range.End<T>>;
+        export function validation<T extends NonNullable<{}>>(start: T, end: T): Validation<string, Range.Full<T>>;
+        export function validation<T extends NonNullable<{}>>(start: T | undefined | null, end?: T): Validation<string, Range<T>> {
+            return Either.fromTry<Range<T>>(() => {
+                return create<T>(start as any, end as any);
+            })
+                .leftMap(e => e.message)
+                .toValidation();
         }
-        return create(arr[0], arr[1]);
     }
 
-    export function fromArray<T>(arr: T[]): Validation<string, Range<T>> {
+    export function toTuple<T extends NonNullable<{}>>(range: Range.Full<T>): Tuple.Full<T>;
+    export function toTuple<T extends NonNullable<{}>>(range: Range.Start<T>): Tuple.Start<T>;
+    export function toTuple<T extends NonNullable<{}>>(range: Range.End<T>): Tuple.End<T>;
+    export function toTuple<T extends NonNullable<{}>>(range: Range<T>): Tuple<T>;
+    export function toTuple<T extends NonNullable<{}>>(range: Range<T>): Tuple<T> {
+        return Range.map(range, toTupleMapper) as Tuple<T>;
+    }
+
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.Start<T>): Range.Start<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.End<T>): Range.End<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.Full<T>): Range.Full<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T>): Range<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: T[]): Range<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T> | T[]): Range<T> {
         if (arr.length === 0) {
-            return Validation.Fail('Cannot create range from empty array');
+            throw new TypeError('Cannot create range from empty array');
         }
-        return create(arr[0], arr[1]);
+        return create(arr[0] as any, arr[1] as any);
     }
 
-    export function map<T, TR1, TR2, TR3>(range: Range<T>, mapper: Mapping<T, TR1, TR2, TR3>): (TR1 | TR2 | TR3) {
+    export namespace fromArray {
+        export function validation<T extends NonNullable<{}>>(arr: Tuple.Start<T>): Validation<string, Range.Start<T>>;
+        export function validation<T extends NonNullable<{}>>(arr: Tuple.End<T>): Validation<string, Range.End<T>>;
+        export function validation<T extends NonNullable<{}>>(arr: Tuple.Full<T>): Validation<string, Range.Full<T>>;
+        export function validation<T extends NonNullable<{}>>(arr: Tuple<T>): Validation<string, Range<T>>;
+        export function validation<T extends NonNullable<{}>>(arr: T[]): Validation<string, Range<T>>;
+        export function validation<T extends NonNullable<{}>>(arr: Tuple<T> | T[]): Validation<string, Range<T>> {
+            return Either.fromTry<Range<T>, TypeError>(() => fromArray(arr as any) as Range<T>)
+                .leftMap(e => e.message)
+                .toValidation();
+        }
+    }
+
+    export function map<T extends NonNullable<{}>, TR1, TR2 = TR1, TR3 = TR2>(range: Range<T>, mapper: Mapping<T, TR1, TR2, TR3>): (TR1 | TR2 | TR3) {
         if (Range.Full.is(range)) {
             return callMapping(mapper.full, range);
         } else if (Range.Start.is(range)) {
@@ -81,22 +138,35 @@ export namespace Range {
         return callMapping(mapper.end, range);
     }
 
-    export function isWithin<T>(range: Range<T>, value: T, exclusive?: boolean | { start?: boolean, end?: boolean }) {
+    /**
+     * Checks whether given value falls in range
+     *
+     * `exclusive` param describes whether to perform exclusive check - by default false
+     */
+    export function isWithin<T extends NonNullable<{}>>(range: Range<T>, value: T, exclusive?: boolean | { start?: boolean, end?: boolean }) {
         const [isStartExclusive, isEndExclusive] = typeof exclusive === 'object' ?
             [exclusive.start ?? false, exclusive.end ?? false] :
             [exclusive, exclusive];
 
         return Range.map(range, {
             full({start, end}) {
-                return com
+                return compare(value, start)[isStartExclusive ? 'isGreater' : 'isGreaterOrEqual'] &&
+                    compare(value, end)[isEndExclusive ? 'isLess' : 'isLessOrEqual'];
+            },
+            start({start}) {
+                return compare(value, start)[isStartExclusive ? 'isGreater' : 'isGreaterOrEqual'];
+            },
+            end({end}) {
+                return compare(value, end)[isEndExclusive ? 'isLess' : 'isLessOrEqual'];
             }
         })
     }
+}
 
-    function callMapping<TMapping extends MappingEntry<any, any>, TRange extends Range<any>>(mapping: TMapping, range: TRange) {
-        if (typeof mapping === 'function') {
-            return mapping(range);
-        }
-        return mapping;
+
+function callMapping<TMapping extends MappingEntry<any, any>, TRange extends Range<any>>(mapping: TMapping, range: TRange) {
+    if (typeof mapping === 'function') {
+        return mapping(range);
     }
+    return mapping;
 }

@@ -24,6 +24,7 @@ describe('map', () => {
                 full: () => 'full' as const
             }
         ]
+        // eslint-disable-next-line @typescript-eslint/naming-convention
     ])('mapping: %s', (_, mapper) => {
         it.each<[Range<any>, ResultType]>([
             [full, 'full'],
