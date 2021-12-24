@@ -1,5 +1,6 @@
 /* eslint-disable no-null/no-null */
 import {Mapping, MappingEntry} from './Mapping';
+import {Validation} from 'monet';
 
 export type Range<T> = Range.Start<T> | Range.End<T> | Range.Full<T>;
 
@@ -41,32 +42,32 @@ export namespace Range {
 
     export type Type<T extends Range<unknown>> = T extends Range<infer U> ? U : never;
 
-    export function create<T>(start: T, end: T): Range.Full<T>;
-    export function create<T>(start: T, end: undefined | null): Range.Start<T>;
-    export function create<T>(start: T): Range.Start<T>;
-    export function create<T>(start: undefined | null, end: T): Range.End<T>;
-    export function create<T>(start?: T, end?: T): Range<T> {
+    export function create<T>(start: T, end: T): Validation<string, Range.Full<T>>;
+    export function create<T>(start: T, end: undefined | null): Validation<string, Range.Start<T>>;
+    export function create<T>(start: T): Validation<string, Range.Start<T>>;
+    export function create<T>(start: undefined | null, end: T): Validation<string, Range.End<T>>;
+    export function create<T>(start?: T, end?: T): Validation<string, Range<T>> {
         if (start !== undefined && start !== null && end !== undefined && end !== null) {
-            return {start, end};
+            return Validation.Success({start, end});
         } else if (start !== undefined && start !== null) {
-            return {start};
+            return Validation.Success({start});
         } else if (end !== undefined && end !== null) {
-            return {end};
+            return Validation.Success({end});
         }
 
-        throw new TypeError('Cannot create Range from undefined or null values');
+        return Validation.Fail('Cannot create Range from undefined or null values');
     }
 
-    export function fromTuple<T>(arr: [T] | [T, T]): Range<T> {
+    export function fromTuple<T>(arr: [T] | [T, T]): Validation<string, Range<T>> {
         if (arr.length === 1) {
             return create(arr[0]);
         }
         return create(arr[0], arr[1]);
     }
 
-    export function fromArray<T>(arr: T[]): Range<T> {
+    export function fromArray<T>(arr: T[]): Validation<string, Range<T>> {
         if (arr.length === 0) {
-            throw new TypeError('Cannot create range from empty array');
+            return Validation.Fail('Cannot create range from empty array');
         }
         return create(arr[0], arr[1]);
     }
@@ -78,6 +79,18 @@ export namespace Range {
             return callMapping(mapper.start, range);
         }
         return callMapping(mapper.end, range);
+    }
+
+    export function isWithin<T>(range: Range<T>, value: T, exclusive?: boolean | { start?: boolean, end?: boolean }) {
+        const [isStartExclusive, isEndExclusive] = typeof exclusive === 'object' ?
+            [exclusive.start ?? false, exclusive.end ?? false] :
+            [exclusive, exclusive];
+
+        return Range.map(range, {
+            full({start, end}) {
+                return com
+            }
+        })
     }
 
     function callMapping<TMapping extends MappingEntry<any, any>, TRange extends Range<any>>(mapping: TMapping, range: TRange) {

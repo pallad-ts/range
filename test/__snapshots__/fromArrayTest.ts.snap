@@ -1,3 +1,0 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
-
-exports[`fromArray fails for empty array 1`] = `"Cannot create range from empty array"`;
