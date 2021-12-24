@@ -31,9 +31,9 @@ npm install @pallad/range
 
 # Usage
 
-`Range` is consist of 3 different interfaces
+`Range` consists of 3 different interfaces
 
-`Range.Start` that defines only start of the range without end.
+`Range.Start` that defines only a start without an end.
 
 ```typescript
 interface Start<T> {
@@ -41,7 +41,7 @@ interface Start<T> {
 }
 ```
 
-`Range.End` that defines only end of the range without start.
+`Range.End` that defines only an end without a start.
 
 ```typescript
 interface End<T> {
@@ -49,7 +49,7 @@ interface End<T> {
 }
 ```
 
-`Range.Full` that defines both start an end of the range.
+`Range.Full` that defines both a start and an end.
 
 ```typescript
 type Full<T> = Start<T> & End<T>
@@ -68,11 +68,11 @@ You can create `Range` from regular creation function, array or tuple.
 Regular `create`
 ```typescript
 // full range
-Range.create(1, 100).success()
+Range.create(1, 100);
 // start range
-Range.create(1).success()
+Range.create(1);
 // end range
-Range.create(undefined, 100).success()
+Range.create(undefined, 100);
 ```
 
 From array or Tuple
@@ -103,7 +103,7 @@ Range.fromArray([])
 Range.fromArray([undefined, null])
 ```
 
-You can prevent throwing an error using `.validation` property on creation functions which return  [`Validation`](https://github.com/monet/monet.js/blob/master/docs/VALIDATION.md) monad instead.
+You can prevent throwing an error using `.validation` property on creation functions which returns [`Validation`](https://github.com/monet/monet.js/blob/master/docs/VALIDATION.md) monad.
 
 ```typescript
 Range.create(1, 100).success();
@@ -116,7 +116,7 @@ Range.create(null, undefined).fail() // 'Cannot create Range from undefined or n
 Enchanted range is a range object with extra methods. Enchanted object is immutable.
 
 ```typescript
-const enchantedRange = enchant(Range.create(1, 100).success());
+const enchantedRange = enchant(Range.create(1, 100));
 
 enchantedRange.isWithin(40); // true
 enchantedRange.isWithin(500); // false
@@ -142,14 +142,15 @@ Range.is({start: 1, end: 10}) // true
 
 ## Mapping
 
-Mapping allows to convert range to any other value.
+Mapping converts range to any other value.
 
 `Range.map` accepts object with properties named `start`, `end` and `full` where each of it might be a function or any
-other value. If property value is a function then result of that function gets returned, otherwise it takes the value.
+other value.
+If property value is a function then result of that function gets returned, otherwise it takes the value.
 
 ```typescript
-const range = Range.create(1, 100).success();
-// mapping to pure values
+const range = Range.create(1, 100);
+// mapping to simple values
 Range.map(range, {start: 'start', end: 'end', full: 'full'}) // 'full'
 
 // mapping functions
@@ -166,8 +167,8 @@ enchantedRange.map({
 for value objects are supported.
 
 ```typescript
-Range.isWithin(Range.create(1, 100).success(), 50) // true
-Range.isWithin(Range.create(1, 100).success(), 500) // false
+Range.isWithin(Range.create(1, 100), 50) // true
+Range.isWithin(Range.create(1, 100), 500) // false
 ```
 
 ### Exclusivity
@@ -175,7 +176,7 @@ Range.isWithin(Range.create(1, 100).success(), 500) // false
 By default `isWithin` treats every range as inclusive for both edges. You can change that behavior with second argument.
 
 ```typescript
-const range = Range.create(1, 100).success();
+const range = Range.create(1, 100);
 
 // exclusivity = false 
 Range.isWithin(range, 100, false) // true 
