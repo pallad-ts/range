@@ -1,7 +1,7 @@
 /* eslint-disable no-null/no-null */
 import {Range} from "@src/Range";
-import {Validation} from 'monet';
 import {assert, IsExact} from 'conditional-type-checks';
+import {Either, left, right} from "@sweet-monads/either";
 
 describe('create', () => {
     describe('success', () => {
@@ -9,37 +9,37 @@ describe('create', () => {
             expect(Range.create(1, 10))
                 .toStrictEqual({start: 1, end: 10});
 
-            expect(Range.create.validation(1, 10))
-                .toStrictEqual(Validation.Success({start: 1, end: 10}));
+            expect(Range.create.either(1, 10))
+                .toStrictEqual(right({start: 1, end: 10}));
         });
 
         it('start', () => {
             expect(Range.create(1))
                 .toStrictEqual({start: 1});
-            expect(Range.create.validation(1))
-                .toStrictEqual(Validation.Success({start: 1}));
+            expect(Range.create.either(1))
+                .toStrictEqual(right({start: 1}));
 
             expect(Range.create(1, null))
                 .toStrictEqual({start: 1});
-            expect(Range.create.validation(1, null))
-                .toStrictEqual(Validation.Success({start: 1}));
+            expect(Range.create.either(1, null))
+                .toStrictEqual(right({start: 1}));
 
             expect(Range.create(1, undefined))
                 .toStrictEqual({start: 1});
-            expect(Range.create.validation(1, undefined))
-                .toStrictEqual(Validation.Success({start: 1}));
+            expect(Range.create.either(1, undefined))
+                .toStrictEqual(right({start: 1}));
         });
 
         it('end', () => {
             expect(Range.create(undefined, 10))
                 .toStrictEqual({end: 10});
-            expect(Range.create.validation(undefined, 10))
-                .toStrictEqual(Validation.Success({end: 10}));
+            expect(Range.create.either(undefined, 10))
+                .toStrictEqual(right({end: 10}));
 
             expect(Range.create(null, 10))
                 .toStrictEqual({end: 10});
-            expect(Range.create.validation(null, 10))
-                .toStrictEqual(Validation.Success({end: 10}));
+            expect(Range.create.either(null, 10))
+                .toStrictEqual(right({end: 10}));
         });
     });
 
@@ -61,8 +61,8 @@ describe('create', () => {
             .toThrowError(message);
 
         // @ts-ignore
-        expect(Range.create.validation(...args))
-            .toEqual(Validation.Fail(message));
+        expect(Range.create.either(...args))
+            .toEqual(left(message));
     });
 
     it('fails if `start` is greater than `end`', () => {
@@ -72,27 +72,27 @@ describe('create', () => {
         })
             .toThrowError(message);
 
-        expect(Range.create.validation(100, 1))
-            .toEqual(Validation.Fail(message));
+        expect(Range.create.either(100, 1))
+            .toEqual(left(message));
     });
 
     it('types', () => {
         const rangeStart = Range.create(10);
         assert<IsExact<typeof rangeStart, Range.Start<number>>>(true);
 
-        const rangeStartValidation = Range.create.validation(10);
-        assert<IsExact<typeof rangeStartValidation, Validation<string, Range.Start<number>>>>(true);
+        const rangeStartValidation = Range.create.either(10);
+        assert<IsExact<typeof rangeStartValidation, Either<string, Range.Start<number>>>>(true);
 
         const rangeEnd = Range.create(undefined, 10);
         assert<IsExact<typeof rangeEnd, Range.End<number>>>(true);
 
-        const rangeEndValidation = Range.create.validation(undefined, 10);
-        assert<IsExact<typeof rangeEndValidation, Validation<string, Range.End<number>>>>(true);
+        const rangeEndValidation = Range.create.either(undefined, 10);
+        assert<IsExact<typeof rangeEndValidation, Either<string, Range.End<number>>>>(true);
 
         const rangeFull = Range.create(0, 10);
         assert<IsExact<typeof rangeFull, Range.Full<number>>>(true);
 
-        const rangeFullValidation = Range.create.validation(0, 10);
-        assert<IsExact<typeof rangeFullValidation, Validation<string, Range.Full<number>>>>(true);
+        const rangeFullValidation = Range.create.either(0, 10);
+        assert<IsExact<typeof rangeFullValidation, Either<string, Range.Full<number>>>>(true);
     });
 });

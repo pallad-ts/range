@@ -1,11 +1,11 @@
 /* eslint-disable no-null/no-null */
 import {Mapping, MappingEntry} from './Mapping';
-import {Either, Validation} from 'monet';
 import {compare} from '@pallad/compare';
+import {Either, right, left} from '@sweet-monads/either';
 
 export type Range<T extends NonNullable<{}>> = Range.Full<T> | Range.Start<T> | Range.End<T>;
 
-const toTupleMapper: Mapping<unknown, Range.Tuple<unknown>> = {
+const toTupleMapper: Mapping<NonNullable<{}>, Range.Tuple<NonNullable<{}>>> = {
     start({start}) {
         return [start];
     },
@@ -16,6 +16,14 @@ const toTupleMapper: Mapping<unknown, Range.Tuple<unknown>> = {
         return [start, end];
     }
 };
+
+function fromTry<T>(fn: () => T): Either<string, T> {
+    try {
+        return right(fn());
+    } catch (e: any) {
+        return left(e.message);
+    }
+}
 
 export namespace Range {
     export type Full<T extends NonNullable<{}>> = Start<T> & End<T>;
@@ -83,16 +91,14 @@ export namespace Range {
     }
 
     export namespace create {
-        export function validation<T extends NonNullable<{}>>(start: T, end: undefined | null): Validation<string, Range.Start<T>>;
-        export function validation<T extends NonNullable<{}>>(start: T): Validation<string, Range.Start<T>>;
-        export function validation<T extends NonNullable<{}>>(start: undefined | null, end: T): Validation<string, Range.End<T>>;
-        export function validation<T extends NonNullable<{}>>(start: T, end: T): Validation<string, Range.Full<T>>;
-        export function validation<T extends NonNullable<{}>>(start: T | undefined | null, end?: T): Validation<string, Range<T>> {
-            return Either.fromTry<Range<T>>(() => {
+        export function either<T extends NonNullable<{}>>(start: T, end: undefined | null): Either<string, Range.Start<T>>;
+        export function either<T extends NonNullable<{}>>(start: T): Either<string, Range.Start<T>>;
+        export function either<T extends NonNullable<{}>>(start: undefined | null, end: T): Either<string, Range.End<T>>;
+        export function either<T extends NonNullable<{}>>(start: T, end: T): Either<string, Range.Full<T>>;
+        export function either<T extends NonNullable<{}>>(start: T | undefined | null, end?: T): Either<string, Range<T>> {
+            return fromTry<Range<T>>(() => {
                 return create<T>(start as any, end as any);
-            })
-                .leftMap(e => e.message)
-                .toValidation();
+            });
         }
     }
 
@@ -117,15 +123,13 @@ export namespace Range {
     }
 
     export namespace fromArray {
-        export function validation<T extends NonNullable<{}>>(arr: Tuple.Start<T>): Validation<string, Range.Start<T>>;
-        export function validation<T extends NonNullable<{}>>(arr: Tuple.End<T>): Validation<string, Range.End<T>>;
-        export function validation<T extends NonNullable<{}>>(arr: Tuple.Full<T>): Validation<string, Range.Full<T>>;
-        export function validation<T extends NonNullable<{}>>(arr: Tuple<T>): Validation<string, Range<T>>;
-        export function validation<T extends NonNullable<{}>>(arr: T[]): Validation<string, Range<T>>;
-        export function validation<T extends NonNullable<{}>>(arr: Tuple<T> | T[]): Validation<string, Range<T>> {
-            return Either.fromTry<Range<T>, TypeError>(() => fromArray(arr as any) as Range<T>)
-                .leftMap(e => e.message)
-                .toValidation();
+        export function either<T extends NonNullable<{}>>(arr: Tuple.Start<T>): Either<string, Range.Start<T>>;
+        export function either<T extends NonNullable<{}>>(arr: Tuple.End<T>): Either<string, Range.End<T>>;
+        export function either<T extends NonNullable<{}>>(arr: Tuple.Full<T>): Either<string, Range.Full<T>>;
+        export function either<T extends NonNullable<{}>>(arr: Tuple<T>): Either<string, Range<T>>;
+        export function either<T extends NonNullable<{}>>(arr: T[]): Either<string, Range<T>>;
+        export function either<T extends NonNullable<{}>>(arr: Tuple<T> | T[]): Either<string, Range<T>> {
+            return fromTry(() => fromArray(arr as any) as Range<T>);
         }
     }
 

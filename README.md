@@ -66,6 +66,7 @@ type Range<T> = Range.Full<T> | Range.Start<T> | Range.End<T>;
 You can create `Range` from regular creation function, array or tuple.
 
 Regular `create`
+
 ```typescript
 // full range
 Range.create(1, 100);
@@ -76,6 +77,7 @@ Range.create(undefined, 100);
 ```
 
 From array or Tuple
+
 ```typescript
 // start range
 Range.fromArray([1])
@@ -89,7 +91,8 @@ Range.fromArray([undefined, 100])
 
 ```
 
-If creation fails, `TypeError` is thrown. 
+If creation fails, `TypeError` is thrown.
+
 ```typescript
 // fails - undefined values
 Range.create(undefined, null)
@@ -103,13 +106,13 @@ Range.fromArray([])
 Range.fromArray([undefined, null])
 ```
 
-You can prevent throwing an error using `.validation` property on creation functions which returns [`Validation`](https://github.com/monet/monet.js/blob/master/docs/VALIDATION.md) monad.
+You can prevent throwing an error using `.either` property on creation functions which
+returns [`Either`](https://www.npmjs.com/package/@sweet-monads/either) monad.
 
 ```typescript
-Range.create(1, 100).success();
-Range.create(null, undefined).fail() // 'Cannot create Range from undefined or null values'
+Range.create(1, 100).value;
+Range.create(null, undefined).value // 'Cannot create Range from undefined or null values'
 ```
-
 
 ## Enchanted range
 

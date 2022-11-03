@@ -1,6 +1,6 @@
 import {Range} from './Range';
 
-export interface Mapping<T, TR1, TR2 = TR1, TR3 = TR2> {
+export interface Mapping<T extends NonNullable<{}>, TR1, TR2 = TR1, TR3 = TR2> {
     start: MappingEntry<Range.Start<T>, TR1>;
     end: MappingEntry<Range.End<T>, TR2>;
     full: MappingEntry<Range.Full<T>, TR3>;

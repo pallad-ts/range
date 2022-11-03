@@ -1,6 +1,6 @@
 {
   "name": "@pallad/range",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "Range structure",
   "main": "compiled/index.js",
   "compiled": "compiled/index.d.ts",
@@ -31,12 +31,12 @@
   },
   "homepage": "https://github.com/pallad-ts/range#readme",
   "devDependencies": {
-    "@pallad/scripts": "^2.1.2",
+    "@pallad/scripts": "^3",
     "conditional-type-checks": "^1.0.5"
   },
   "dependencies": {
     "@pallad/compare": "^1.1.1",
-    "monet": "^0.9.3",
+    "@sweet-monads/either": "^3.1.0",
     "predicates": "^2.0.3"
   }
 }

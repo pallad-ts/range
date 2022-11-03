@@ -2,7 +2,7 @@ import {Range} from './Range';
 import {Mapping} from './Mapping';
 import * as is from 'predicates';
 
-export type Enchanted<T> = Readonly<Range<T>> & Enchanted.Shape<T>;
+export type Enchanted<T extends NonNullable<{}>> = Readonly<Range<T>> & Enchanted.Shape<T>;
 
 const TYPE_KEY = '@type';
 const TYPE = '@pallad/range/enchanted';
@@ -10,11 +10,11 @@ const TYPE = '@pallad/range/enchanted';
 const isType = is.property(TYPE_KEY, is.strictEqual(TYPE));
 
 export namespace Enchanted {
-    export function is<T = unknown>(range: any): range is Enchanted<T> {
+    export function is<T extends NonNullable<{}>>(range: any): range is Enchanted<T> {
         return range instanceof Shape || isType(range);
     }
 
-    export class Shape<T> {
+    export class Shape<T extends NonNullable<{}>> {
         constructor() {
             Object.defineProperty(this, TYPE_KEY, {
                 value: TYPE,
