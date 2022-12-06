@@ -1,7 +1,7 @@
 /* eslint-disable no-null/no-null */
 import {Mapping, MappingEntry} from './Mapping';
-import {compare} from '@pallad/compare';
-import {Either, right, left} from '@sweet-monads/either';
+import {Comparator, compare} from '@pallad/compare';
+import {ERRORS} from "./errors";
 
 export type Range<T extends NonNullable<{}>> = Range.Full<T> | Range.Start<T> | Range.End<T>;
 
@@ -16,14 +16,6 @@ const toTupleMapper: Mapping<NonNullable<{}>, Range.Tuple<NonNullable<{}>>> = {
         return [start, end];
     }
 };
-
-function fromTry<T>(fn: () => T): Either<string, T> {
-    try {
-        return right(fn());
-    } catch (e: any) {
-        return left(e.message);
-    }
-}
 
 export namespace Range {
     export type Full<T extends NonNullable<{}>> = Start<T> & End<T>;
@@ -71,14 +63,14 @@ export namespace Range {
         export type Full<T> = [T, T];
     }
 
-    export function create<T extends NonNullable<{}>>(start: T, end: undefined | null): Range.Start<T>;
+    export function create<T extends NonNullable<{}>>(start: T, end: undefined | null, comparator?: Comparator<T>): Range.Start<T>;
     export function create<T extends NonNullable<{}>>(start: T): Range.Start<T>;
-    export function create<T extends NonNullable<{}>>(start: undefined | null, end: T): Range.End<T>;
-    export function create<T extends NonNullable<{}>>(start: T, end: T): Range.Full<T>;
-    export function create<T extends NonNullable<{}>>(start: T | undefined | null, end?: T): Range<T> {
+    export function create<T extends NonNullable<{}>>(start: undefined | null, end: T, comparator?: Comparator<T>): Range.End<T>;
+    export function create<T extends NonNullable<{}>>(start: T, end: T, comparator?: Comparator<T>): Range.Full<T>;
+    export function create<T extends NonNullable<{}>>(start: T | undefined | null, end?: T, comparator?: Comparator<T>): Range<T> {
         if (start !== undefined && start !== null && end !== undefined && end !== null) {
-            if (compare(start, end).isGreater) {
-                throw new TypeError('"start" cannot be greater than "end"');
+            if (compare(start, end, comparator).isGreater) {
+                throw ERRORS.START_GREATER_THAN_END();
             }
             return {start, end};
         } else if (start !== undefined && start !== null) {
@@ -87,19 +79,7 @@ export namespace Range {
             return {end};
         }
 
-        throw new TypeError('Cannot create Range from undefined or null values');
-    }
-
-    export namespace create {
-        export function either<T extends NonNullable<{}>>(start: T, end: undefined | null): Either<string, Range.Start<T>>;
-        export function either<T extends NonNullable<{}>>(start: T): Either<string, Range.Start<T>>;
-        export function either<T extends NonNullable<{}>>(start: undefined | null, end: T): Either<string, Range.End<T>>;
-        export function either<T extends NonNullable<{}>>(start: T, end: T): Either<string, Range.Full<T>>;
-        export function either<T extends NonNullable<{}>>(start: T | undefined | null, end?: T): Either<string, Range<T>> {
-            return fromTry<Range<T>>(() => {
-                return create<T>(start as any, end as any);
-            });
-        }
+        throw ERRORS.UNDEFINED_BOUNDARIES();
     }
 
     export function toTuple<T extends NonNullable<{}>>(range: Range.Full<T>): Tuple.Full<T>;
@@ -110,27 +90,16 @@ export namespace Range {
         return Range.map(range, toTupleMapper) as Tuple<T>;
     }
 
-    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.Start<T>): Range.Start<T>;
-    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.End<T>): Range.End<T>;
-    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.Full<T>): Range.Full<T>;
-    export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T>): Range<T>;
-    export function fromArray<T extends NonNullable<{}>>(arr: T[]): Range<T>;
-    export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T> | T[]): Range<T> {
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.Start<T>, comparator?: Comparator<T>): Range.Start<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.End<T>, comparator?: Comparator<T>): Range.End<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple.Full<T>, comparator?: Comparator<T>): Range.Full<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T>, comparator?: Comparator<T>): Range<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: T[], comparator?: Comparator<T>): Range<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T> | T[], comparator?: Comparator<T>): Range<T> {
         if (arr.length === 0) {
-            throw new TypeError('Cannot create range from empty array');
+            throw ERRORS.EMPTY_ARRAY_ARGUMENT();
         }
-        return create(arr[0] as any, arr[1] as any);
-    }
-
-    export namespace fromArray {
-        export function either<T extends NonNullable<{}>>(arr: Tuple.Start<T>): Either<string, Range.Start<T>>;
-        export function either<T extends NonNullable<{}>>(arr: Tuple.End<T>): Either<string, Range.End<T>>;
-        export function either<T extends NonNullable<{}>>(arr: Tuple.Full<T>): Either<string, Range.Full<T>>;
-        export function either<T extends NonNullable<{}>>(arr: Tuple<T>): Either<string, Range<T>>;
-        export function either<T extends NonNullable<{}>>(arr: T[]): Either<string, Range<T>>;
-        export function either<T extends NonNullable<{}>>(arr: Tuple<T> | T[]): Either<string, Range<T>> {
-            return fromTry(() => fromArray(arr as any) as Range<T>);
-        }
+        return create(arr[0] as any, arr[1] as any, comparator);
     }
 
     export function map<T extends NonNullable<{}>, TR1, TR2 = TR1, TR3 = TR2>(range: Range<T>, mapper: Mapping<T, TR1, TR2, TR3>): (TR1 | TR2 | TR3) {
@@ -147,21 +116,24 @@ export namespace Range {
      *
      * `exclusive` param describes whether to perform exclusive check - by default false
      */
-    export function isWithin<T extends NonNullable<{}>>(range: Range<T>, value: T, exclusive?: boolean | { start?: boolean, end?: boolean }) {
+    export function isWithin<T extends NonNullable<{}>>(range: Range<T>,
+                                                        value: T,
+                                                        exclusive?: boolean | { start?: boolean, end?: boolean },
+                                                        comparator?: Comparator<T>) {
         const [isStartExclusive, isEndExclusive] = typeof exclusive === 'object' ?
             [exclusive.start ?? false, exclusive.end ?? false] :
             [exclusive, exclusive];
 
         return Range.map(range, {
             full({start, end}) {
-                return compare(value, start)[isStartExclusive ? 'isGreater' : 'isGreaterOrEqual'] &&
-                    compare(value, end)[isEndExclusive ? 'isLess' : 'isLessOrEqual'];
+                return compare(value, start, comparator)[isStartExclusive ? 'isGreater' : 'isGreaterOrEqual'] &&
+                    compare(value, end, comparator)[isEndExclusive ? 'isLess' : 'isLessOrEqual'];
             },
             start({start}) {
-                return compare(value, start)[isStartExclusive ? 'isGreater' : 'isGreaterOrEqual'];
+                return compare(value, start, comparator)[isStartExclusive ? 'isGreater' : 'isGreaterOrEqual'];
             },
             end({end}) {
-                return compare(value, end)[isEndExclusive ? 'isLess' : 'isLessOrEqual'];
+                return compare(value, end, comparator)[isEndExclusive ? 'isLess' : 'isLessOrEqual'];
             }
         })
     }

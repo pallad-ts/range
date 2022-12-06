@@ -1,5 +1,7 @@
 import {Range} from '@src/Range';
 import {enchant} from '@src/enchant';
+import * as sinon from 'sinon';
+import {A_VALUE, B_VALUE} from "./fixtures";
 
 describe('Enchanted', () => {
 
@@ -14,6 +16,24 @@ describe('Enchanted', () => {
             full: 'full'
         }))
             .toBe(expected);
+    });
+
+    it('uses custom comparator if provided', () => {
+        const comparator = sinon.stub().callsFake((a, b) => a.value - b.value);
+
+        const range = enchant(Range.fromArray([A_VALUE, B_VALUE], comparator), comparator);
+        expect(range.start)
+            .toBe(A_VALUE);
+
+        sinon.assert.calledOnce(comparator);
+
+        expect(range.isWithin({value: 100}))
+            .toBe(false)
+
+        expect(range.isWithin({value: 2}))
+            .toBe(true)
+
+        sinon.assert.callCount(comparator, 5);
     });
 
     it.each<[Range.Tuple<number>, boolean]>([

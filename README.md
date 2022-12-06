@@ -55,7 +55,7 @@ interface End<T> {
 type Full<T> = Start<T> & End<T>
 ```
 
-The `Range` type itself is an union of those 3 types.
+The `Range` type itself is an union of all of them.
 
 ```typescript
 type Range<T> = Range.Full<T> | Range.Start<T> | Range.End<T>;  
@@ -106,9 +106,6 @@ Range.fromArray([])
 Range.fromArray([undefined, null])
 ```
 
-You can prevent throwing an error using `.either` property on creation functions which
-returns [`Either`](https://www.npmjs.com/package/@sweet-monads/either) monad.
-
 ```typescript
 Range.create(1, 100).value;
 Range.create(null, undefined).value // 'Cannot create Range from undefined or null values'
@@ -139,6 +136,15 @@ enchantedRange.toTuple(); // [1, 100]
 Range.is({start: 10}) // true
 Range.is({end: 10}) // true
 Range.is({start: 1, end: 10}) // true
+```
+
+# Custom comparator
+Boundaries comparison is a crucial feature of `Range` struct, therefore internally uses `@pallad/compare` for comparison. 
+Sometimes it is not enough and you can provide your own [comparison function](https://github.com/pallad-ts/compare#defining-custom-sorting-for-any-values).
+
+```typescript
+Range.create({value: 1}, {value: 100}, (a, b) => a.value - b.value); // no fail
+Range.fromArray([{value: 1}, {value: 100}], (a, b) => a.value - b.value); // no fail
 ```
 
 # Helper methods

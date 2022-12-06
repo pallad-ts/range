@@ -1,26 +1,19 @@
 import {Range} from './Range';
 import {Mapping} from './Mapping';
-import * as is from 'predicates';
+import {TypeCheck} from "@pallad/type-check";
+import {Comparator} from "@pallad/compare";
 
 export type Enchanted<T extends NonNullable<{}>> = Readonly<Range<T>> & Enchanted.Shape<T>;
 
-const TYPE_KEY = '@type';
-const TYPE = '@pallad/range/enchanted';
-
-const isType = is.property(TYPE_KEY, is.strictEqual(TYPE));
-
+const TYPE_CHECK = new TypeCheck('@pallad/range/enchanted');
 export namespace Enchanted {
-    export function is<T extends NonNullable<{}>>(range: any): range is Enchanted<T> {
-        return range instanceof Shape || isType(range);
+    export function is<T extends NonNullable<{}>>(value: unknown): value is Shape<T> {
+        return TYPE_CHECK.isType(value);
     }
 
-    export class Shape<T extends NonNullable<{}>> {
-        constructor() {
-            Object.defineProperty(this, TYPE_KEY, {
-                value: TYPE,
-                configurable: false,
-                enumerable: false
-            });
+    export class Shape<T extends NonNullable<{}>> extends TYPE_CHECK.clazz {
+        constructor(readonly comparator?: Comparator<T>) {
+            super();
         }
 
         map<T1, T2 = T1, T3 = T2>(mapper: Mapping<T, T1, T2, T3>): (T1 | T2 | T3) {
@@ -28,7 +21,7 @@ export namespace Enchanted {
         }
 
         isWithin(value: T, exclusive?: boolean | { start?: boolean, end?: boolean }) {
-            return Range.isWithin(this as unknown as Range<T>, value, exclusive);
+            return Range.isWithin(this as unknown as Range<T>, value, exclusive, this.comparator);
         }
 
         toTuple() {
