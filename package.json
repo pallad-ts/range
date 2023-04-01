@@ -32,7 +32,8 @@
   "homepage": "https://github.com/pallad-ts/range#readme",
   "devDependencies": {
     "@pallad/scripts": "^3",
-    "conditional-type-checks": "^1.0.5"
+    "conditional-type-checks": "^1.0.5",
+    "sinon": "^15.0.3"
   },
   "dependencies": {
     "@pallad/compare": "^1.2.0",
