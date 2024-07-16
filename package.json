@@ -1,6 +1,6 @@
 {
   "name": "@pallad/range",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Range structure",
   "main": "compiled/index.js",
   "compiled": "compiled/index.d.ts",
