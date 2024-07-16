@@ -19,6 +19,9 @@ describe('enchant', () => {
 
         expect(enchanted.isWithin)
             .toEqual(Enchanted.Shape.prototype.isWithin);
+
+        expect(enchanted.mapValues)
+            .toEqual(Enchanted.Shape.prototype.mapValues);
     });
 
     it('enchanting already enchanted range does not have any effect', () => {

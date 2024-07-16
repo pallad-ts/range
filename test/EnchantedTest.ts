@@ -58,4 +58,15 @@ describe('Enchanted', () => {
         expect(enchanted.toTuple())
             .toStrictEqual(tuple);
     });
+
+    it.each<[Range.Tuple<number>, Range.Tuple<string>]>([
+        [[10], ['10s']],
+        [[undefined, 100], [undefined, '100s']],
+        [[0, 100], ['0s', '100s']]
+    ])('mapValues %s', (tuple, expectedTuple) => {
+        const enchanted = enchant(Range.fromArray(tuple));
+
+        expect(enchanted.convert(value => value + 's').toTuple())
+            .toStrictEqual(expectedTuple);
+    });
 })

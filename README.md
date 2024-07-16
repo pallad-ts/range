@@ -139,8 +139,11 @@ Range.is({start: 1, end: 10}) // true
 ```
 
 # Custom comparator
-Boundaries comparison is a crucial feature of `Range` struct, therefore internally uses `@pallad/compare` for comparison. 
-Sometimes it is not enough and you can provide your own [comparison function](https://github.com/pallad-ts/compare#defining-custom-sorting-for-any-values).
+
+Boundaries comparison is a crucial feature of `Range` struct, therefore internally uses `@pallad/compare` for
+comparison.
+Sometimes it is not enough and you can provide your
+own [comparison function](https://github.com/pallad-ts/compare#defining-custom-sorting-for-any-values).
 
 ```typescript
 Range.create({value: 1}, {value: 100}, (a, b) => a.value - b.value); // no fail
@@ -206,4 +209,23 @@ Range.isWithin(range, 1, {start: true}) // false
 // end exclusive 
 Range.isWithin(range, 100, {end: true}) // false 
 Range.isWithin(range, 1, {end: true}) // true
+```
+
+## Converting a range of a type to another range
+
+```typescript
+
+Range.convert(Range.create(1, 100), (value) => value + 's'); // Range<string> { start: '1s', end: '100s' }
+Range.convert(Range.create(1), (value) => value + 's'); // Range<string> { start: '1s'}
+Range.convert(Range.create(undefined, q00), (value) => value + 's'); // Range<string> { end: '100s'}
+```
+
+Sometimes you need to map to values that cannot be easily compared, therefore you need to provide custom comparison
+function to ensure proper creation of new range
+
+```typescript
+const range = Range.create(2, 100);
+
+// custom comparison function is needed since '2s' > '100s' using regular string comparison
+Range.convert(range, (value) => value + 's', (a, b) => parseInt(a) - parseInt(b));
 ```

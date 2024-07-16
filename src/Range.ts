@@ -67,10 +67,11 @@ export namespace Range {
     export function create<T extends NonNullable<{}>>(start: T): Range.Start<T>;
     export function create<T extends NonNullable<{}>>(start: undefined | null, end: T, comparator?: Comparator<T>): Range.End<T>;
     export function create<T extends NonNullable<{}>>(start: T, end: T, comparator?: Comparator<T>): Range.Full<T>;
+    export function create<T extends NonNullable<{}>>(start: T | undefined | null, end: T | undefined | null, comparator?: Comparator<T>): Range<T>;
     export function create<T extends NonNullable<{}>>(start: T | undefined | null, end?: T, comparator?: Comparator<T>): Range<T> {
         if (start !== undefined && start !== null && end !== undefined && end !== null) {
             if (compare(start, end, comparator).isGreater) {
-                throw ERRORS.START_GREATER_THAN_END();
+                throw ERRORS.START_GREATER_THAN_END.create();
             }
             return {start, end};
         } else if (start !== undefined && start !== null) {
@@ -79,7 +80,7 @@ export namespace Range {
             return {end};
         }
 
-        throw ERRORS.UNDEFINED_BOUNDARIES();
+        throw ERRORS.UNDEFINED_BOUNDARIES.create();
     }
 
     export function toTuple<T extends NonNullable<{}>>(range: Range.Full<T>): Tuple.Full<T>;
@@ -95,13 +96,19 @@ export namespace Range {
     export function fromArray<T extends NonNullable<{}>>(arr: Tuple.Full<T>, comparator?: Comparator<T>): Range.Full<T>;
     export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T>, comparator?: Comparator<T>): Range<T>;
     export function fromArray<T extends NonNullable<{}>>(arr: T[], comparator?: Comparator<T>): Range<T>;
+    export function fromArray<T extends NonNullable<{}>>(arr: Array<T | undefined | null>, comparator?: Comparator<T>): Range<T>;
     export function fromArray<T extends NonNullable<{}>>(arr: Tuple<T> | T[], comparator?: Comparator<T>): Range<T> {
         if (arr.length === 0) {
-            throw ERRORS.EMPTY_ARRAY_ARGUMENT();
+            throw ERRORS.EMPTY_ARRAY_ARGUMENT.create();
         }
         return create(arr[0] as any, arr[1] as any, comparator);
     }
 
+    /**
+     * Maps range using provided mapper
+     *
+     * Mapper defines set of functions used for mapping Start, End and Full range.
+     */
     export function map<T extends NonNullable<{}>, TR1, TR2 = TR1, TR3 = TR2>(range: Range<T>, mapper: Mapping<T, TR1, TR2, TR3>): (TR1 | TR2 | TR3) {
         if (Range.Full.is(range)) {
             return callMapping(mapper.full, range);
@@ -134,6 +141,25 @@ export namespace Range {
             },
             end({end}) {
                 return compare(value, end, comparator)[isEndExclusive ? 'isLess' : 'isLessOrEqual'];
+            }
+        })
+    }
+
+    /**
+     * Converts given range to another range using mapper on each value.
+     *
+     * Convenience method over `Range.map`
+     */
+    export function convert<T extends NonNullable<{}>, TNew extends NonNullable<{}>>(range: Range<T>, mapper: (value: T) => TNew, comparator?: Comparator<TNew>) {
+        return Range.map(range, {
+            full({start, end}) {
+                return create(mapper(start), mapper(end), comparator);
+            },
+            start({start}) {
+                return create(mapper(start), undefined, comparator);
+            },
+            end({end}) {
+                return create(undefined, mapper(end), comparator);
             }
         })
     }
